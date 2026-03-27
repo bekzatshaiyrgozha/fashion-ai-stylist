@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-multipart
+opencv-python
+mediapipe
+pillow
+numpy
+anthropic
+sentence-transformers
+faiss-cpu
+python-dotenv
+
+# Optional: pin versions for reproducibility, e.g. fastapi==0.95.0
