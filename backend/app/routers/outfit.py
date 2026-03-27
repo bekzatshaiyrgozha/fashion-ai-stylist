@@ -2,8 +2,12 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from app.api.dependencies import get_current_user
+from app.services import OutfitGenerator
+from app.services import catalog_store_db as catalog_store
 
 router = APIRouter()
+generator = OutfitGenerator()
+_HISTORY: dict[str, List[dict]] = {}
 
 
 class OutfitGenerateRequest(BaseModel):
@@ -14,24 +18,38 @@ class OutfitGenerateRequest(BaseModel):
 
 
 class OutfitItem(BaseModel):
-    product_id: int
+    id: int
     name: str
-    category: str
+    price: float
 
 
 class OutfitResponse(BaseModel):
-    items: List[OutfitItem]
-    message: Optional[str]
+    outfit: dict[str, Optional[OutfitItem]]
+    ai_explanation: str
+    total_price: float
 
 
 @router.post("/generate", response_model=OutfitResponse)
 async def generate_outfit(req: OutfitGenerateRequest, current=Depends(get_current_user)):
-    # TODO: call OutfitGenerator service (embeddings + faiss or rules)
-    demo = [OutfitItem(product_id=1, name="Demo Shirt", category="tops"), OutfitItem(product_id=3, name="Demo Jeans", category="bottoms")]
-    return OutfitResponse(items=demo, message="generated (placeholder)")
+    products = await catalog_store.list_products()
+    cat_map = await catalog_store.categories_map()
+
+    payload = await generator.generate_with_ai(
+        products=products,
+        categories_map=cat_map,
+        style=req.style,
+        scenario=req.scenario,
+        sizes=req.sizes,
+        colors=req.colors,
+    )
+
+    user_id = str(getattr(current, "id", "anonymous"))
+    _HISTORY.setdefault(user_id, []).append(payload)
+    return OutfitResponse(**payload)
 
 
 @router.get("/history", response_model=List[OutfitResponse])
 async def outfit_history(current=Depends(get_current_user)):
-    # TODO: fetch history from DB
-    return []
+    user_id = str(getattr(current, "id", "anonymous"))
+    rows = _HISTORY.get(user_id, [])
+    return [OutfitResponse(**row) for row in rows]

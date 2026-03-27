@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
     DB_HOST: str
@@ -8,6 +9,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_SECRET_KEY: str
     REFRESH_TOKEN_SECRET_KEY: str
     ALGORITHM: str
+    GROQ_API_KEY: Optional[str] = None
 
     @property
     def DATABASE_URL(self) -> str:
@@ -15,5 +17,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
