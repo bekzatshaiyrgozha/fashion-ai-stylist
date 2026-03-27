@@ -16,5 +16,3 @@ class SUserResponse(BaseModel):
     first_name: str
     last_name: str
     email: str
-    level: str
-    xp: int
