@@ -14,9 +14,6 @@ class User(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
 
-    level = Column(String, default="A1")
-    xp = Column(Integer, default=0)
-
     is_admin = Column(Boolean, default=False)
 
     created_at = Column(DateTime, default=func.now())
