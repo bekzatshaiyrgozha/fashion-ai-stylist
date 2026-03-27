@@ -35,3 +35,33 @@ Next steps
 - Implement service logic in `app/services` using OpenCV / Mediapipe for try-on
 - Add authentication, storage for assets, and model inference pipelines
 - Add tests and CI
+
+Docker (local)
+
+1. Copy `.env.example` to `.env` and set values if needed:
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+2. Build and run services with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+3. Open http://localhost:8000 — FastAPI app will be available.
+
+To run in background:
+
+```bash
+docker compose up -d --build
+```
+
+To stop and remove containers:
+
+```bash
+docker compose down
+```
+
