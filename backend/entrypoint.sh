@@ -1,12 +1,12 @@
 #!/bin/sh
 set -e
 
-if [ -n "$POSTGRES_HOST" ]; then
-  echo "Waiting for database at $POSTGRES_HOST:$POSTGRES_PORT..."
+if [ -n "$DB_HOST" ] || [ -n "$POSTGRES_HOST" ]; then
+  echo "Waiting for database at ${DB_HOST:-$POSTGRES_HOST}:${DB_PORT:-$POSTGRES_PORT}..."
   python - <<PY
 import os, time, socket
-host = os.environ.get('POSTGRES_HOST')
-port = int(os.environ.get('POSTGRES_PORT', '5432'))
+host = os.environ.get('DB_HOST') or os.environ.get('POSTGRES_HOST')
+port = int(os.environ.get('DB_PORT') or os.environ.get('POSTGRES_PORT', '5432'))
 while True:
     try:
         s = socket.create_connection((host, port), timeout=1)

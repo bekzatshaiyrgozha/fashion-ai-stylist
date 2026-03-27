@@ -30,9 +30,13 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser \
 # Copy application code
 COPY --chown=appuser:appuser . /app
 
+# Entrypoint
+COPY --chown=appuser:appuser entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 USER appuser
 
 EXPOSE 8000
 
 # Default command: run Uvicorn as the app user
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+CMD ["/entrypoint.sh"]
