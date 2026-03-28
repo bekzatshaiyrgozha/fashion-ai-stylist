@@ -1,42 +1,20 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+RUN apt-get update && apt-get install -y \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libxcb1 \
+    libgl1
 
 WORKDIR /app
 
-# Install system dependencies required for some Python packages
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       build-essential \
-       gcc \
-       libpq-dev \
-       libjpeg-dev \
-       zlib1g-dev \
-       libgl1 \
-       libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy requirements first to leverage Docker cache
-COPY requirements.txt /app/requirements.txt
-
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r /app/requirements.txt
-
-# Create a non-root user and group
-RUN groupadd -r appuser && useradd -r -g appuser appuser \
-    && mkdir -p /app/static/images && chown -R appuser:appuser /app
-
-# Copy application code
-COPY --chown=appuser:appuser . /app
-
-# Entrypoint
-COPY --chown=appuser:appuser entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-USER appuser
+COPY . .
 
 EXPOSE 8000
 
-# Default command: run Uvicorn as the app user
-CMD ["/entrypoint.sh"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
