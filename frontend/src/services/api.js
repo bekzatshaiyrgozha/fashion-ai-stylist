@@ -83,6 +83,29 @@ export const outfitAPI = {
     api.get('/outfit/history'),
 };
 
+// Try-on endpoints
+export const tryonAPI = {
+  upload: (userPhoto, productId, clothingType = 'top') => {
+    const formData = new FormData();
+    formData.append('user_photo', userPhoto);
+    formData.append('product_id', String(productId));
+    formData.append('clothing_type', clothingType);
+    return api.post('/tryon/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  preview: (userPhoto, clothingPhoto, clothingType = 'top') => {
+    const formData = new FormData();
+    formData.append('user_photo', userPhoto);
+    formData.append('clothing_photo', clothingPhoto);
+    formData.append('clothing_type', clothingType);
+    return api.post('/tryon/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
+
 // Admin - Products endpoints
 export const adminProductsAPI = {
   list: (skip = 0, limit = 10) =>

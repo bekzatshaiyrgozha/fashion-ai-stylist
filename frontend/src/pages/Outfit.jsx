@@ -79,10 +79,10 @@ export function OutfitGeneratorPage() {
 
   return (
     <div>
-      <h1>🎨 Outfit Generator</h1>
+      <h1>Outfit Generator</h1>
 
       <div className="outfit-generator-container">
-        <aside className="generator-form-sidebar">
+        <aside className="generator-form-sidebar lux-card">
           <h2>Create Outfit</h2>
           {error && <div className="alert alert-danger">{error}</div>}
 
@@ -138,7 +138,7 @@ export function OutfitGeneratorPage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="colorInput">Colors (add and press Enter)</label>
+              <label htmlFor="colorInput">Colors (press Enter to add)</label>
               <input
                 type="text"
                 id="colorInput"
@@ -211,23 +211,23 @@ function OutfitResult({ outfit }) {
 
   return (
     <div className="outfit-result">
-      <h2>✨ Your Generated Outfit</h2>
+      <h2>Your Generated Outfit</h2>
 
       <div className="outfit-items">
-        {items?.top && <OutfitItem item={items.top} slot="Top" />}
-        {items?.bottom && <OutfitItem item={items.bottom} slot="Bottom" />}
-        {items?.shoes && <OutfitItem item={items.shoes} slot="Shoes" />}
-        {items?.accessory && <OutfitItem item={items.accessory} slot="Accessory" />}
+        {items?.top && <OutfitItem item={items.top} slot="TOP" />}
+        {items?.bottom && <OutfitItem item={items.bottom} slot="BOTTOM" />}
+        {items?.shoes && <OutfitItem item={items.shoes} slot="SHOES" />}
+        {items?.accessory && <OutfitItem item={items.accessory} slot="ACCESSORY" />}
       </div>
 
       <div className="outfit-summary">
-        <h3>💰 Total Price</h3>
+        <h3>Total Price</h3>
         <p className="total-price">${totalPrice?.toFixed(2) || '0.00'}</p>
       </div>
 
       {explanation && (
         <div className="outfit-explanation">
-          <h3>🤖 AI Stylist Explanation</h3>
+          <h3>AI Explanation</h3>
           <p className="explanation-text">{explanation}</p>
         </div>
       )}
@@ -254,17 +254,14 @@ function OutfitItem({ item, slot }) {
 
 const outfitStyles = `
 .outfit-generator-container {
-  display: flex;
-  gap: 2rem;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1rem;
   margin-top: 2rem;
 }
 
 .generator-form-sidebar {
-  flex: 0 0 350px;
-  background: white;
-  padding: 2rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--border);
+  padding: 1.2rem;
   height: fit-content;
   position: sticky;
   top: 100px;
@@ -292,6 +289,7 @@ const outfitStyles = `
 .checkbox-label input[type="checkbox"] {
   cursor: pointer;
   width: auto;
+  accent-color: var(--gold);
 }
 
 .color-tags {
@@ -305,17 +303,17 @@ const outfitStyles = `
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--primary);
-  color: white;
-  padding: 0.5rem 0.75rem;
-  border-radius: 9999px;
+  background: #101010;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.38rem 0.6rem;
   font-size: 0.9rem;
 }
 
 .color-tag-remove {
   background: none;
   border: none;
-  color: white;
+  color: var(--muted);
   cursor: pointer;
   font-size: 1.2rem;
   padding: 0;
@@ -327,11 +325,12 @@ const outfitStyles = `
 }
 
 .outfit-result {
-  background: white;
-  padding: 2rem;
-  border-radius: 0.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 1.2rem;
   border: 1px solid var(--border);
   margin-bottom: 2rem;
+  animation: fadeInUp 0.6s ease forwards;
 }
 
 .outfit-result h2 {
@@ -340,31 +339,36 @@ const outfitStyles = `
 
 .outfit-items {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
 .outfit-item {
-  background: var(--light);
+  background: #101010;
   padding: 1rem;
-  border-radius: 0.5rem;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   text-align: center;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.outfit-item:hover {
+  transform: translateY(-4px);
+  border-color: var(--gold);
 }
 
 .outfit-item h4 {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  color: var(--gold);
+  font-size: 0.72rem;
   text-transform: uppercase;
+  letter-spacing: 0.1em;
   margin-bottom: 0.5rem;
 }
 
 .item-image {
   width: 100%;
   height: 150px;
-  background: white;
-  border-radius: 0.375rem;
+  background: #0d0d0d;
   overflow: hidden;
   margin-bottom: 0.75rem;
 }
@@ -383,13 +387,13 @@ const outfitStyles = `
 .item-price {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--gold);
 }
 
 .outfit-summary {
-  background: var(--light);
+  background: #101010;
+  border: 1px solid var(--border);
   padding: 1.5rem;
-  border-radius: 0.5rem;
   margin-bottom: 2rem;
 }
 
@@ -398,17 +402,16 @@ const outfitStyles = `
 }
 
 .total-price {
-  font-size: 2rem;
+  font-size: 2.3rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--gold);
   margin: 0;
 }
 
 .outfit-explanation {
-  background: var(--light);
+  background: #101010;
   padding: 1.5rem;
-  border-radius: 0.5rem;
-  border-left: 4px solid var(--secondary);
+  border-left: 3px solid var(--gold);
 }
 
 .outfit-explanation h3 {
@@ -417,13 +420,13 @@ const outfitStyles = `
 
 .explanation-text {
   line-height: 1.8;
-  color: var(--text-primary);
+  color: var(--muted);
+  font-style: italic;
 }
 
 .outfit-history {
-  background: white;
-  padding: 2rem;
-  border-radius: 0.5rem;
+  background: var(--card);
+  padding: 1.2rem;
   border: 1px solid var(--border);
 }
 
@@ -437,17 +440,16 @@ const outfitStyles = `
 }
 
 .history-item {
-  background: var(--light);
+  background: #101010;
   padding: 1rem;
-  border-radius: 0.375rem;
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
 .history-item:hover {
-  background: white;
-  border-color: var(--primary);
+  transform: translateY(-4px);
+  border-color: var(--gold);
 }
 
 .history-item h4 {
@@ -456,17 +458,16 @@ const outfitStyles = `
 
 .history-item-meta {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   margin: 0;
 }
 
 @media (max-width: 1024px) {
   .outfit-generator-container {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .generator-form-sidebar {
-    flex: 1;
     position: static;
   }
 }

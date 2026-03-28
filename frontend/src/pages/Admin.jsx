@@ -10,40 +10,31 @@ export function AdminPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
-    <div className="admin-container">
-      <h1>⚙️ Admin Panel</h1>
-      <div className="admin-tabs">
-        <button
-          className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
-        >
+    <div className="admin-layout">
+      <aside className="admin-sidebar">
+        <h2>Admin</h2>
+        <button className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
           Dashboard
         </button>
-        <button
-          className={`tab-btn ${activeTab === 'products' ? 'active' : ''}`}
-          onClick={() => setActiveTab('products')}
-        >
+        <button className={`tab-btn ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
           Products
         </button>
-        <button
-          className={`tab-btn ${activeTab === 'categories' ? 'active' : ''}`}
-          onClick={() => setActiveTab('categories')}
-        >
+        <button className={`tab-btn ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
           Categories
         </button>
-        <button
-          className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
+        <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
           Users
         </button>
-      </div>
+      </aside>
 
-      <div className="admin-content">
-        {activeTab === 'dashboard' && <AdminDashboard />}
-        {activeTab === 'products' && <AdminProducts />}
-        {activeTab === 'categories' && <AdminCategories />}
-        {activeTab === 'users' && <AdminUsers />}
+      <div className="admin-container">
+        <h1>Admin Panel</h1>
+        <div className="admin-content">
+          {activeTab === 'dashboard' && <AdminDashboard />}
+          {activeTab === 'products' && <AdminProducts />}
+          {activeTab === 'categories' && <AdminCategories />}
+          {activeTab === 'users' && <AdminUsers />}
+        </div>
       </div>
     </div>
   );
@@ -76,7 +67,7 @@ function AdminDashboard() {
       <StatCard title="Total Products" value={stats.total_products} icon="📦" />
       <StatCard title="Total Categories" value={stats.total_categories} icon="🏷️" />
       <StatCard title="Total Users" value={stats.total_users} icon="👥" />
-      <StatCard title="Admin Users" value={stats.admin_users} icon="👮" />
+      <StatCard title="Admin Users" value={stats.admin_users ?? 0} icon="👮" />
     </div>
   );
 }
@@ -247,21 +238,31 @@ function AdminProducts() {
       </button>
 
       {showForm && (
-        <ProductForm
-          initialData={formData}
-          onSubmit={handleSubmit}
-          onChange={setFormData}
-          categories={categories}
-          formImage={formImage}
-          onImageChange={setFormImage}
-        />
+        <div className="modal-backdrop" onClick={() => setShowForm(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{editingId ? 'Edit Product' : 'Add Product'}</h3>
+              <button className="btn btn-sm btn-outline" onClick={() => setShowForm(false)}>Close</button>
+            </div>
+            <ProductForm
+              initialData={formData}
+              onSubmit={handleSubmit}
+              onChange={setFormData}
+              categories={categories}
+              formImage={formImage}
+              onImageChange={setFormImage}
+            />
+          </div>
+        </div>
       )}
 
       <div className="table-responsive">
         <table className="admin-table">
           <thead>
             <tr>
+              <th>Photo</th>
               <th>Name</th>
+              <th>Brand</th>
               <th>Price</th>
               <th>Stock</th>
               <th>Image</th>
@@ -271,7 +272,13 @@ function AdminProducts() {
           <tbody>
             {products.map((product) => (
               <tr key={product.id}>
+                <td>
+                  {product.images?.[0] ? (
+                    <img src={product.images[0]} alt={product.name} style={{ width: 42, height: 56, objectFit: 'cover' }} />
+                  ) : '—'}
+                </td>
                 <td>{product.name}</td>
+                <td>{(product.brand || product.name?.split(' ')[0] || 'Maison').toUpperCase()}</td>
                 <td>${product.price.toFixed(2)}</td>
                 <td>{product.stock ? 'In Stock' : 'Out of Stock'}</td>
                 <td>
@@ -315,13 +322,13 @@ function AdminProducts() {
                       setShowForm(true);
                     }}
                   >
-                    Edit
+                    EDIT
                   </button>
                   <button
                     className="btn btn-sm btn-danger"
                     onClick={() => handleDelete(product.id)}
                   >
-                    Delete
+                    DELETE
                   </button>
                 </td>
               </tr>
@@ -334,6 +341,12 @@ function AdminProducts() {
 }
 
 function ProductForm({ initialData, onSubmit, onChange, categories, formImage, onImageChange }) {
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) onImageChange(file);
+  };
+
   return (
     <form onSubmit={onSubmit} className="admin-form">
       <div className="form-group">
@@ -417,11 +430,18 @@ function ProductForm({ initialData, onSubmit, onChange, categories, formImage, o
       </div>
       <div className="form-group">
         <label>Product photo</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => onImageChange(e.target.files?.[0] || null)}
-        />
+        <div
+          className="drop-upload"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => onImageChange(e.target.files?.[0] || null)}
+          />
+          <p>Drag & Drop product photo here</p>
+        </div>
         {formImage && <p style={{ marginTop: 6, fontSize: 12 }}>Selected: {formImage.name}</p>}
       </div>
       <button type="submit" className="btn btn-success">
@@ -626,42 +646,57 @@ function AdminUsers() {
 }
 
 const adminStyles = `
-.admin-container {
-  max-width: 1200px;
-  margin: 0 auto;
+.admin-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 1rem;
 }
 
-.admin-tabs {
-  display: flex;
-  gap: 1rem;
-  margin: 2rem 0;
-  border-bottom: 2px solid var(--border);
+.admin-sidebar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  height: fit-content;
+  position: sticky;
+  top: 98px;
+}
+
+.admin-sidebar h2 {
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+}
+
+.admin-container {
+  width: 100%;
 }
 
 .tab-btn {
-  background: none;
-  border: none;
-  padding: 1rem 1.5rem;
+  width: 100%;
+  background: #101010;
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  text-align: left;
   cursor: pointer;
-  font-size: 1rem;
-  color: var(--text-secondary);
-  border-bottom: 3px solid transparent;
+  font-size: 0.74rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   transition: all 0.2s;
 }
 
 .tab-btn:hover {
-  color: var(--primary);
+  color: var(--gold);
 }
 
 .tab-btn.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
+  color: var(--gold);
+  border-color: var(--gold);
 }
 
 .admin-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 0.5rem;
+  background: var(--card);
+  padding: 1.2rem;
   border: 1px solid var(--border);
 }
 
@@ -673,10 +708,10 @@ const adminStyles = `
 }
 
 .stat-card {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: white;
-  padding: 2rem;
-  border-radius: 0.5rem;
+  background: #101010;
+  color: var(--text);
+  padding: 1.1rem;
+  border: 1px solid var(--border);
   display: flex;
   gap: 1rem;
   align-items: center;
@@ -691,21 +726,24 @@ const adminStyles = `
 }
 
 .stat-title {
-  font-size: 0.9rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   opacity: 0.9;
   margin: 0;
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.7rem;
   font-weight: 600;
+  color: var(--gold);
   margin: 0;
 }
 
 .admin-form {
-  background: var(--light);
+  background: #101010;
+  border: 1px solid var(--border);
   padding: 1.5rem;
-  border-radius: 0.5rem;
   margin-bottom: 2rem;
 }
 
@@ -731,17 +769,20 @@ const adminStyles = `
 }
 
 .admin-table th {
-  background: var(--light);
+  background: #101010;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
 }
 
 .admin-table tr:hover {
-  background: var(--light);
+  background: #0f0f0f;
 }
 
 .admin-table td {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .admin-table .btn {
@@ -749,14 +790,61 @@ const adminStyles = `
 }
 
 .role-select {
-  padding: 0.5rem;
+  padding: 0.4rem;
   border: 1px solid var(--border);
-  border-radius: 0.375rem;
+  border-radius: 0;
   font-size: 0.9rem;
 }
 
 .mb-2 {
   margin-bottom: 1rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 300;
+}
+
+.modal-panel {
+  width: min(760px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 1rem;
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.drop-upload {
+  border: 1px dashed var(--gold);
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.drop-upload p {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 920px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+  }
 }
 `;
 

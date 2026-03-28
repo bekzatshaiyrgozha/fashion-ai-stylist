@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { productsAPI, categoriesAPI } from '../services/api';
 import TryOnModal from '../components/TryOnModal';
+
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='800'%3E%3Crect width='100%25' height='100%25' fill='%23101010'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23a0a0a0' font-family='Arial' font-size='26'%3ENO IMAGE%3C/text%3E%3C/svg%3E";
 
 export function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [filters, setFilters] = useState({
     category: null,
+    brand: null,
     color: null,
     size: null,
     minPrice: null,
@@ -57,16 +61,30 @@ export function ProductsPage() {
     }));
   };
 
+  const displayProducts = useMemo(() => {
+    if (!filters.brand) return products;
+    const brandFilter = filters.brand.toLowerCase();
+    return products.filter((p) => {
+      const brand = (p.brand || p.name?.split(' ')[0] || 'Maison').toLowerCase();
+      return brand.includes(brandFilter);
+    });
+  }, [products, filters.brand]);
+
+  const brandOptions = useMemo(() => {
+    const brands = products.map((p) => p.brand || p.name?.split(' ')[0] || 'Maison');
+    return Array.from(new Set(brands));
+  }, [products]);
+
   return (
     <div>
       <h1>Shop</h1>
 
       <div className="products-container">
-        <aside className="filters-sidebar">
+        <aside className="filters-sidebar lux-card">
           <h3>Filters</h3>
 
           <div className="form-group">
-            <label htmlFor="categoryId">Category</label>
+            <label htmlFor="categoryId">Style</label>
             <select
               id="categoryId"
               name="category"
@@ -78,6 +96,21 @@ export function ProductsPage() {
                 <option key={cat.id} value={cat.slug}>
                   {cat.name}
                 </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="brand">Brand</label>
+            <select
+              id="brand"
+              name="brand"
+              value={filters.brand || ''}
+              onChange={handleFilterChange}
+            >
+              <option value="">All Brands</option>
+              {brandOptions.map((brand) => (
+                <option key={brand} value={brand}>{brand}</option>
               ))}
             </select>
           </div>
@@ -113,7 +146,7 @@ export function ProductsPage() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="minPrice">Min Price ($)</label>
+            <label htmlFor="minPrice">Min Price</label>
             <input
               type="number"
               id="minPrice"
@@ -125,7 +158,7 @@ export function ProductsPage() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="maxPrice">Max Price ($)</label>
+            <label htmlFor="maxPrice">Max Price</label>
             <input
               type="number"
               id="maxPrice"
@@ -141,6 +174,7 @@ export function ProductsPage() {
             onClick={() =>
               setFilters({
                 category: null,
+                brand: null,
                 color: null,
                 size: null,
                 minPrice: null,
@@ -155,12 +189,12 @@ export function ProductsPage() {
         <main className="products-grid">
           {loading && <div className="alert alert-info">Loading products...</div>}
           {error && <div className="alert alert-danger">{error}</div>}
-          {!loading && products.length === 0 && (
+          {!loading && displayProducts.length === 0 && (
             <div className="alert alert-warning">No products found</div>
           )}
 
           <div className="grid">
-            {products.map((product) => (
+            {displayProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -172,16 +206,23 @@ export function ProductsPage() {
 
 function ProductCard({ product }) {
   const [showTryOn, setShowTryOn] = useState(false);
+  const brand = (product.brand || product.name?.split(' ')[0] || 'Maison').toUpperCase();
+  const image = product.images?.[0] || PLACEHOLDER_IMAGE;
 
   return (
     <>
-      <div className="product-card">
-        {product.images && product.images[0] && (
-          <div className="product-image">
-            <img src={product.images[0]} alt={product.name} />
-          </div>
-        )}
+      <div className="product-card lux-card">
+        <div className="product-image">
+          <img src={image} alt={product.name} />
+          <button
+            className="btn btn-primary product-hover-btn"
+            onClick={() => setShowTryOn(true)}
+          >
+            Try On
+          </button>
+        </div>
         <div className="product-info">
+          <p className="product-brand">{brand}</p>
           <h3>{product.name}</h3>
           <p className="product-description">{product.description}</p>
           <p className="product-price">${product.price.toFixed(2)}</p>
@@ -204,13 +245,6 @@ function ProductCard({ product }) {
               <strong>Sizes:</strong> {product.sizes.join(', ')}
             </p>
           )}
-          <button 
-            className="btn btn-primary btn-block"
-            onClick={() => setShowTryOn(true)}
-            style={{ marginTop: '0.75rem' }}
-          >
-            🎨 Try On
-          </button>
         </div>
       </div>
       
@@ -227,7 +261,8 @@ function ProductCard({ product }) {
   );
 }
 
-export function ProductDetailPage({ productId }) {
+export function ProductDetailPage() {
+  const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -235,13 +270,13 @@ export function ProductDetailPage({ productId }) {
 
   useEffect(() => {
     loadProduct();
-  }, [productId]);
+  }, [id]);
 
   const loadProduct = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await productsAPI.getById(productId);
+      const response = await productsAPI.getById(id);
       setProduct(response.data);
     } catch (err) {
       setError('Failed to load product');
@@ -259,9 +294,7 @@ export function ProductDetailPage({ productId }) {
     <>
       <div className="product-detail">
         <div className="product-detail-image">
-          {product.images && product.images[0] && (
-            <img src={product.images[0]} alt={product.name} />
-          )}
+          <img src={product.images?.[0] || PLACEHOLDER_IMAGE} alt={product.name} />
         </div>
         <div className="product-detail-info">
           <h1>{product.name}</h1>
@@ -328,24 +361,25 @@ export function ProductDetailPage({ productId }) {
 
 const productsStyles = `
 .products-container {
-  display: flex;
-  gap: 2rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.4rem;
   margin-top: 2rem;
 }
 
 .filters-sidebar {
-  flex: 0 0 250px;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--border);
-  height: fit-content;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 1rem;
+  padding: 1.2rem;
   position: sticky;
   top: 100px;
+  z-index: 4;
 }
 
 .filters-sidebar h3 {
-  margin-bottom: 1.5rem;
+  grid-column: 1 / -1;
+  margin-bottom: 0.3rem;
 }
 
 .products-grid {
@@ -354,28 +388,20 @@ const productsStyles = `
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
 }
 
 .product-card {
-  background: white;
-  border-radius: 0.5rem;
-  border: 1px solid var(--border);
   overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.product-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .product-image {
+  position: relative;
   width: 100%;
-  height: 200px;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
-  background: var(--light);
+  background: #0d0d0d;
 }
 
 .product-image img {
@@ -384,25 +410,49 @@ const productsStyles = `
   object-fit: cover;
 }
 
+.product-hover-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.product-card:hover .product-hover-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .product-info {
-  padding: 1rem;
+  padding: 0.9rem;
 }
 
 .product-info h3 {
-  font-size: 1.1rem;
+  font-size: 0.92rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   margin-bottom: 0.5rem;
 }
 
+.product-brand {
+  color: var(--gold);
+  margin-bottom: 0.35rem;
+  font-size: 0.67rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
 .product-description {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  color: var(--muted);
+  font-size: 0.82rem;
   margin-bottom: 0.5rem;
 }
 
 .product-price {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--gold);
   margin-bottom: 0.5rem;
 }
 
@@ -415,10 +465,10 @@ const productsStyles = `
 
 .tag {
   display: inline-block;
-  background: var(--light);
-  color: var(--text-primary);
+  background: #101010;
+  color: var(--muted);
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border: 1px solid var(--border);
   font-size: 0.75rem;
   font-weight: 500;
 }
@@ -426,7 +476,7 @@ const productsStyles = `
 .product-colors,
 .product-sizes {
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   margin-bottom: 0.5rem;
 }
 
@@ -435,15 +485,13 @@ const productsStyles = `
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   margin-top: 2rem;
-  background: white;
   padding: 2rem;
-  border-radius: 0.5rem;
+  background: var(--card);
   border: 1px solid var(--border);
 }
 
 .product-detail-image {
-  background: var(--light);
-  border-radius: 0.5rem;
+  background: #0d0d0d;
   overflow: hidden;
 }
 
@@ -459,13 +507,13 @@ const productsStyles = `
 .product-detail-description {
   font-size: 1.1rem;
   margin-bottom: 1rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .product-detail-price {
   font-size: 2rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--gold);
   margin-bottom: 2rem;
 }
 
@@ -478,17 +526,13 @@ const productsStyles = `
 }
 
 @media (max-width: 768px) {
-  .products-container {
-    flex-direction: column;
-  }
-
   .filters-sidebar {
-    flex: 1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     position: static;
   }
 
   .grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .product-detail {

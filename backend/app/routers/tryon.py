@@ -4,14 +4,12 @@ Virtual Try-On API endpoints for pose detection and clothing overlay.
 
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, Form
 from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.auth import verify_token
-from app.db.db_config import async_session_maker
+from app.api.dependencies import get_current_user
 from app.services.tryon_service import TryOnService
 from app.services import catalog_store_db
 
-router = APIRouter(prefix="/tryon", tags=["try-on"])
+router = APIRouter(tags=["try-on"])
 
 # Global instance of TryOnService (initialize once)
 tryon_service = TryOnService()
@@ -22,7 +20,7 @@ async def preview_try_on(
     user_photo: UploadFile = File(...),
     clothing_photo: UploadFile = File(...),
     clothing_type: str = Form(default="top"),
-    user_payload: dict = Depends(verify_token)
+    current_user=Depends(get_current_user)
 ):
     """
     Preview try-on with direct clothing image upload (no product lookup).
@@ -72,6 +70,8 @@ async def preview_try_on(
             "clothing_type": clothing_type
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         return JSONResponse(
             status_code=500,
@@ -88,7 +88,7 @@ async def upload_try_on(
     user_photo: UploadFile = File(...),
     product_id: int = Form(...),
     clothing_type: str = Form(default="top"),
-    user_payload: dict = Depends(verify_token)
+    current_user=Depends(get_current_user)
 ):
     """
     Try-on with product image lookup from catalog.
@@ -118,7 +118,7 @@ async def upload_try_on(
             )
         
         # Check if product has images
-        if not product.images or len(product.images) == 0:
+        if not product.get("images") or len(product.get("images", [])) == 0:
             raise HTTPException(
                 status_code=400,
                 detail="Product has no images"
@@ -129,7 +129,7 @@ async def upload_try_on(
         
         # Get product image bytes
         # If image is stored as URL path, we need to read it from file system
-        clothing_image_bytes = await _get_product_image_bytes(product.images[0])
+        clothing_image_bytes = await _get_product_image_bytes(product["images"][0])
         
         if not clothing_image_bytes:
             raise HTTPException(
@@ -159,7 +159,7 @@ async def upload_try_on(
                     "message": "Человек не обнаружен на фото. Пожалуйста, загрузите фото где видна ваша фигура.",
                     "image": None,
                     "product_id": product_id,
-                    "product_name": product.name
+                    "product_name": product.get("name")
                 }
             )
         
@@ -167,7 +167,7 @@ async def upload_try_on(
             "success": True,
             "image": result_base64,
             "product_id": product_id,
-            "product_name": product.name,
+            "product_name": product.get("name"),
             "message": "Try-on успешно создана"
         }
         
@@ -195,29 +195,38 @@ async def _get_product_image_bytes(image_path: str) -> bytes:
         Image bytes or None if file not found
     """
     try:
-        import os
-        
-        # Convert path to absolute file system path
-        # Image paths are stored as /static/images/...
-        # Files are actually in backend/static/images/...
-        
-        if image_path.startswith("/"):
-            image_path = image_path[1:]  # Remove leading slash
-        
-        # Get the backend directory (parent of app directory)
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        file_path = os.path.join(backend_dir, image_path)
-        
-        # Security check: ensure path is within static directory
-        static_dir = os.path.join(backend_dir, "static")
-        if not os.path.abspath(file_path).startswith(os.path.abspath(static_dir)):
+        from pathlib import Path
+        from urllib.parse import urlparse
+
+        if not image_path:
+            return None
+
+        # tryon.py -> routers -> app -> backend
+        backend_dir = Path(__file__).resolve().parents[2]
+        static_dir = (backend_dir / "static").resolve()
+
+        # Handle full URL, absolute path, and relative path
+        parsed = urlparse(image_path)
+        normalized_path = parsed.path if parsed.scheme else image_path
+        normalized_path = normalized_path.lstrip("/")
+
+        if normalized_path.startswith("static/"):
+            candidate = (backend_dir / normalized_path).resolve()
+        elif normalized_path.startswith("images/"):
+            candidate = (static_dir / normalized_path).resolve()
+        else:
+            # Fallback for plain filenames or other relative paths
+            candidate = (static_dir / normalized_path).resolve()
+
+        # Security check: allow only files under backend/static
+        if static_dir not in candidate.parents and candidate != static_dir:
             raise ValueError("Invalid image path")
-        
-        if os.path.exists(file_path):
-            with open(file_path, "rb") as f:
+
+        if candidate.exists() and candidate.is_file():
+            with open(candidate, "rb") as f:
                 return f.read()
         else:
-            print(f"Image file not found: {file_path}")
+            print(f"Image file not found: {candidate}")
             return None
             
     except Exception as e:

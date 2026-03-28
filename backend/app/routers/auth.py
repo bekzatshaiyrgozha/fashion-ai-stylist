@@ -23,6 +23,11 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UpdateProfileRequest(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+
 @router.post("/register", status_code=201)
 async def register(req: RegisterRequest):
     # delegate to AuthService which uses UserService / DAO
@@ -63,11 +68,11 @@ async def bootstrap_admin(current_user=Depends(get_current_user)):
 
 @router.get("/profile", response_model=SUserResponse)
 async def get_profile(user=Depends(get_current_user)):
-    return user
+    return SUserResponse.model_validate(user)
 
 
 @router.put("/profile", response_model=SUserResponse)
-async def update_profile(data: SUserResponse, user=Depends(get_current_user)):
+async def update_profile(data: UpdateProfileRequest, user=Depends(get_current_user)):
     """Update user profile (first_name, last_name only - email and password via separate endpoints)"""
     async with async_session_maker() as session:
         row = await session.get(User, user.id)
@@ -75,9 +80,9 @@ async def update_profile(data: SUserResponse, user=Depends(get_current_user)):
             raise HTTPException(status_code=404, detail="User not found")
         
         # Only allow updating name fields
-        if data.first_name:
+        if data.first_name is not None:
             row.first_name = data.first_name
-        if data.last_name:
+        if data.last_name is not None:
             row.last_name = data.last_name
         
         await session.commit()

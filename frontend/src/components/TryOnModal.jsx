@@ -13,10 +13,25 @@ export default function TryOnModal({
   const [resultImage, setResultImage] = useState(null);
   const [uploadMode, setUploadMode] = useState("upload"); // "upload" or "camera"
   const [selectedFile, setSelectedFile] = useState(null);
-  const [clothingType, setClothingType] = useState("top");
+  const [clothingType, setClothingType] = useState("auto");
   const [cameraStream, setCameraStream] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+
+  const inferClothingType = () => {
+    const category = (product?.category || "").toLowerCase();
+    const name = (product?.name || "").toLowerCase();
+
+    if (category.includes("shoe") || category.includes("обув") || name.includes("shoe") || name.includes("кроссов") || name.includes("ботин")) {
+      return "shoes";
+    }
+
+    if (category.includes("bottom") || category.includes("pants") || category.includes("skirt") || category.includes("низ") || name.includes("брюк") || name.includes("джинс") || name.includes("юбк")) {
+      return "bottom";
+    }
+
+    return "top";
+  };
 
   // Cleanup camera stream on unmount
   useEffect(() => {
@@ -142,14 +157,16 @@ export default function TryOnModal({
     setError(null);
 
     try {
+      const resolvedClothingType = clothingType === "auto" ? inferClothingType() : clothingType;
+
       const formData = new FormData();
       formData.append("user_photo", selectedFile);
       formData.append("product_id", product.id);
-      formData.append("clothing_type", clothingType);
+      formData.append("clothing_type", resolvedClothingType);
 
       console.log("Sending try-on request with:", {
         product_id: product.id,
-        clothing_type: clothingType,
+        clothing_type: resolvedClothingType,
         file_size: selectedFile.size
       });
 
@@ -306,10 +323,17 @@ export default function TryOnModal({
                   onChange={(e) => setClothingType(e.target.value)}
                   className="clothing-select"
                 >
+                  <option value="auto">Авто (рекомендуется)</option>
                   <option value="top">Верх (рубашка, свитер)</option>
                   <option value="bottom">Низ (штаны, юбка)</option>
                   <option value="shoes">Обувь</option>
                 </select>
+              </div>
+
+              <div className="ai-tryon-hint">
+                ✨ Powered by AI — реалистичная примерка занимает 10-20 секунд
+                <br />
+                📸 Фото в полный рост даёт лучший результат
               </div>
 
               {error && <div className="error-message">{error}</div>}

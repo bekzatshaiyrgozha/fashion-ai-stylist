@@ -15,8 +15,8 @@
 }
 
 .modal-content {
-  background: white;
-  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   max-width: 600px;
   width: 90%;
@@ -39,19 +39,19 @@
 
 .modal-header {
   padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border);
   position: relative;
 }
 
 .modal-header h2 {
   margin: 0 0 8px 0;
   font-size: 24px;
-  color: #333;
+  color: var(--text);
 }
 
 .product-name {
   margin: 0;
-  color: #666;
+  color: var(--muted);
   font-size: 14px;
 }
 
@@ -74,8 +74,8 @@
 }
 
 .close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: #101010;
+  color: var(--text);
 }
 
 .modal-body {
@@ -109,7 +109,7 @@
   padding: 12px 16px;
   border: 2px solid #e0e0e0;
   background: white;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
@@ -123,9 +123,9 @@
 }
 
 .mode-btn.active {
-  border-color: #ff6b6b;
-  background: #ff6b6b;
-  color: white;
+  border-color: var(--gold);
+  background: var(--gold);
+  color: #0a0a0a;
 }
 
 /* Upload Area */
@@ -145,15 +145,15 @@
   gap: 12px;
   padding: 40px 20px;
   border: 2px dashed #e0e0e0;
-  border-radius: 12px;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #f9f9f9;
+  background: #101010;
 }
 
 .upload-label:hover {
-  border-color: #ff6b6b;
-  background: #fff5f5;
+  border-color: var(--gold);
+  background: #111;
 }
 
 .upload-icon {
@@ -167,7 +167,7 @@
 }
 
 .file-name {
-  color: #ff6b6b;
+  color: var(--gold);
   font-weight: 600;
 }
 
@@ -226,8 +226,18 @@
 
 .clothing-select:focus {
   outline: none;
-  border-color: #ff6b6b;
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+  border-color: var(--gold);
+  box-shadow: none;
+}
+
+.ai-tryon-hint {
+  margin-top: -6px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--gold);
+  background: rgba(201, 168, 76, 0.08);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 /* Error Message */
@@ -237,7 +247,7 @@
   color: #c92a2a;
   border-radius: 8px;
   font-size: 14px;
-  border-left: 4px solid #ff6b6b;
+  border-left: 3px solid var(--gold);
 }
 
 /* Result Section */
@@ -259,14 +269,14 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #ff6b6b;
+  color: var(--gold);
 }
 
 /* Buttons */
-.btn {
+.modal-content .btn {
   padding: 12px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -279,14 +289,15 @@
 }
 
 .btn-primary {
-  background: #ff6b6b;
-  color: white;
+  background: var(--gold);
+  color: #0a0a0a;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #ff5252;
+  background: transparent;
+  color: var(--gold);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  box-shadow: none;
 }
 
 .btn-primary:disabled {
@@ -295,12 +306,14 @@
 }
 
 .btn-secondary {
-  background: #f0f0f0;
-  color: #333;
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold);
 }
 
 .btn-secondary:hover {
-  background: #e0e0e0;
+  background: var(--gold);
+  color: #0a0a0a;
   transform: translateY(-1px);
 }
 

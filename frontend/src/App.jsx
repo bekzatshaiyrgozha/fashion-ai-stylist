@@ -6,6 +6,7 @@ import { ProductsPage, ProductDetailPage, ProductsStyles } from './pages/Product
 import { OutfitGeneratorPage, OutfitStyles } from './pages/Outfit';
 import { AdminPage, AdminStyles } from './pages/Admin';
 import { HomePage } from './pages/Home';
+import { TryOnPage, TryOnStyles } from './pages/TryOn';
 import { authAPI } from './services/api';
 import './styles/global.css';
 
@@ -83,6 +84,7 @@ function App() {
         <ProductsStyles />
         <OutfitStyles />
         <AdminStyles />
+        <TryOnStyles />
         
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -98,6 +100,14 @@ function App() {
           />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
+          <Route
+            path="/try-on"
+            element={
+              <ProtectedRoute>
+                <TryOnPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/outfit"
             element={

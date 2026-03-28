@@ -235,10 +235,9 @@ const authStyles = `
 }
 
 .auth-card {
-  background: white;
+  background: var(--card);
+  border: 1px solid var(--border);
   padding: 2rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
 }
@@ -253,9 +252,13 @@ const authStyles = `
   margin-top: 1rem;
 }
 
+.auth-link a {
+  color: var(--gold);
+}
+
 .profile-info p {
   margin-bottom: 1rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 `;
 

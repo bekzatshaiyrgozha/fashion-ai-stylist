@@ -5,74 +5,31 @@ import '../styles/home.css';
 export function HomePage() {
   return (
     <div className="home">
-      <section className="hero">
-        <div className="hero-content">
-          <h1>👗 Fashion AI Stylist</h1>
-          <p>Get personalized outfit recommendations powered by AI</p>
+      <section className="hero-fullscreen">
+        <div className="hero-overlay" />
+        <div className="hero-content fade-in-up">
+          <h1>DISCOVER YOUR STYLE</h1>
+          <p className="hero-subheading">AI-curated premium looks for modern fashion experience.</p>
           <div className="hero-buttons">
-            <Link to="/outfit" className="btn btn-primary btn-lg">
-              Generate Outfit
+            <Link to="/products" className="btn btn-primary btn-lg">
+              Explore Collection
             </Link>
-            <Link to="/products" className="btn btn-outline btn-lg">
-              Browse Shop
+            <Link to="/outfit" className="btn btn-outline btn-lg">
+              Try AI Stylist
             </Link>
           </div>
         </div>
       </section>
 
       <section className="features">
-        <h2>Why Choose Fashion AI?</h2>
-        <div className="features-grid">
-          <FeatureCard
-            icon="🤖"
-            title="AI-Powered Recommendations"
-            description="Get smart outfit suggestions based on your style preferences and available inventory."
-          />
-          <FeatureCard
-            icon="🎨"
-            title="Style Matching"
-            description="Our AI understands color compatibility, style harmony, and occasion-specific recommendations."
-          />
-          <FeatureCard
-            icon="🛍️"
-            title="Curated Catalog"
-            description="Browse a carefully selected collection of fashion items from various categories."
-          />
-          <FeatureCard
-            icon="💰"
-            title="Smart Pricing"
-            description="Get complete outfit bundles with transparent pricing for the entire look."
-          />
-        </div>
-      </section>
-
-      <section className="how-it-works">
-        <h2>How It Works</h2>
+        <h2>Luxury AI Experience</h2>
         <div className="steps">
-          <Step number="1" title="Choose Your Style" description="Select casual, formal, sport, or office style" />
-          <Step number="2" title="Pick a Scenario" description="Tell us the occasion - work, date, gym, etc." />
-          <Step number="3" title="Set Preferences" description="Choose your sizes and preferred colors" />
-          <Step number="4" title="Get Recommendations" description="AI generates a complete outfit with explanation" />
+          <Step number="01" title="Personal Styling" description="Select style and occasion, get instant recommendations." />
+          <Step number="02" title="Virtual Try-On" description="Upload your photo and preview premium looks." />
+          <Step number="03" title="Curated Selection" description="Explore catalog with AI-powered fit suggestions." />
+          <Step number="04" title="Premium Output" description="Get complete outfit with explanation and total price." />
         </div>
       </section>
-
-      <section className="cta">
-        <h2>Ready to Transform Your Style?</h2>
-        <p>Start getting AI-powered outfit recommendations today</p>
-        <Link to="/outfit" className="btn btn-primary btn-lg">
-          Create Your First Outfit
-        </Link>
-      </section>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, description }) {
-  return (
-    <div className="feature-card">
-      <div className="feature-icon">{icon}</div>
-      <h3>{title}</h3>
-      <p>{description}</p>
     </div>
   );
 }
