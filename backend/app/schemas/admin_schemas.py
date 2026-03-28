@@ -12,6 +12,7 @@ class ProductCreate(BaseModel):
     stock: bool = True
     style_tags: Optional[List[str]] = []
     scenarios: Optional[List[str]] = []
+    images: Optional[List[str]] = []
 
 
 class ProductOut(ProductCreate):
@@ -28,6 +29,7 @@ class ProductUpdate(BaseModel):
     stock: Optional[bool] = None
     style_tags: Optional[List[str]] = None
     scenarios: Optional[List[str]] = None
+    images: Optional[List[str]] = None
 
 
 class CategoryCreate(BaseModel):

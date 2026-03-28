@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from pydantic import BaseModel
 from app.services import catalog_store_db as catalog_store
+from app.api.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -23,14 +24,8 @@ class Product(ProductBase):
     id: int
 
 
-def fake_admin_user():
-    # TODO: replace with real auth + role check
-    return {"id": "admin_1", "role": "admin"}
-
-
 @router.get("/", response_model=List[Product])
 async def list_products(category: Optional[str] = Query(None)):
-    # TODO: replace store with DB queries + pagination
     rows = await catalog_store.list_products()
     cat_map = await catalog_store.categories_map()
     data = []
@@ -70,7 +65,10 @@ async def get_product(product_id: int):
 
 
 @router.post("/", response_model=Product)
-async def create_product(item: ProductCreate, current=Depends(fake_admin_user)):
+async def create_product(item: ProductCreate, current_user=Depends(get_current_user)):
+    # Check if user is admin
+    if not getattr(current_user, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin access required")
     cat_map = await catalog_store.categories_map()
     # map external category slug -> category_id fallback 1
     reverse = {v: k for k, v in cat_map.items()}
@@ -91,7 +89,10 @@ async def create_product(item: ProductCreate, current=Depends(fake_admin_user)):
 
 
 @router.put("/{product_id}", response_model=Product)
-async def update_product(product_id: int, item: ProductCreate, current=Depends(fake_admin_user)):
+async def update_product(product_id: int, item: ProductCreate, current_user=Depends(get_current_user)):
+    # Check if user is admin
+    if not getattr(current_user, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin access required")
     p = await catalog_store.get_product(product_id)
     if not p:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -109,6 +110,9 @@ async def update_product(product_id: int, item: ProductCreate, current=Depends(f
 
 
 @router.delete("/{product_id}")
-async def delete_product(product_id: int, current=Depends(fake_admin_user)):
+async def delete_product(product_id: int, current_user=Depends(get_current_user)):
+    # Check if user is admin
+    if not getattr(current_user, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin access required")
     await catalog_store.delete_product(product_id)
     return {"message": "deleted", "product_id": product_id}

@@ -71,7 +71,9 @@ async def admin_upload_product_image(product_id: int, file: UploadFile = File(..
     with open(dest, "wb") as f:
         f.write(await file.read())
     url = f"/static/images/{filename}"
-    prod.setdefault("images", []).append(url)
+    images = list(prod.get("images") or [])
+    images.append(url)
+    await catalog_store.update_product(product_id, {"images": images})
     return {"url": url}
 
 

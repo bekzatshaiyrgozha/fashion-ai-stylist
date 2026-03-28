@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, func, select, update, text
+from sqlalchemy.exc import IntegrityError
 
 from app.db.db_config import async_session_maker
 from app.db.models import Category, Product, User
@@ -82,9 +83,32 @@ async def list_categories() -> List[dict]:
 
 async def create_category(name: str, slug: Optional[str]) -> dict:
     async with async_session_maker() as session:
-        row = Category(name=name, slug=slug or name.lower().replace(" ", "-"))
+        def _build_row() -> Category:
+            return Category(name=name, slug=slug or name.lower().replace(" ", "-"))
+
+        row = _build_row()
         session.add(row)
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            await session.execute(
+                text(
+                    """
+                    SELECT setval(
+                        pg_get_serial_sequence('categories', 'id'),
+                        COALESCE((SELECT MAX(id) FROM categories), 1),
+                        true
+                    )
+                    """
+                )
+            )
+            await session.commit()
+
+            row = _build_row()
+            session.add(row)
+            await session.commit()
+
         await session.refresh(row)
         return {"id": row.id, "name": row.name, "slug": row.slug}
 
@@ -158,20 +182,44 @@ async def get_product(product_id: int) -> Optional[dict]:
 
 async def create_product(data: dict) -> dict:
     async with async_session_maker() as session:
-        row = Product(
-            name=data["name"],
-            description=data.get("description"),
-            price=data.get("price") or 0,
-            category_id=data.get("category_id") or 1,
-            sizes=data.get("sizes") or [],
-            colors=data.get("colors") or [],
-            style_tags=data.get("style_tags") or [],
-            scenarios=data.get("scenarios") or [],
-            images=data.get("images") or [],
-            stock=bool(data.get("stock", True)),
-        )
+        def _build_row() -> Product:
+            return Product(
+                name=data["name"],
+                description=data.get("description"),
+                price=data.get("price") or 0,
+                category_id=data.get("category_id") or 1,
+                sizes=data.get("sizes") or [],
+                colors=data.get("colors") or [],
+                style_tags=data.get("style_tags") or [],
+                scenarios=data.get("scenarios") or [],
+                images=data.get("images") or [],
+                stock=bool(data.get("stock", True)),
+            )
+
+        row = _build_row()
         session.add(row)
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            # Fix broken autoincrement sequence (common after manual inserts)
+            await session.execute(
+                text(
+                    """
+                    SELECT setval(
+                        pg_get_serial_sequence('products', 'id'),
+                        COALESCE((SELECT MAX(id) FROM products), 1),
+                        true
+                    )
+                    """
+                )
+            )
+            await session.commit()
+
+            row = _build_row()
+            session.add(row)
+            await session.commit()
+
         await session.refresh(row)
         return _product_to_dict(row)
 
